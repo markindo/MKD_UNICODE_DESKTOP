@@ -1,0 +1,74 @@
+@import "tailwindcss";
+/* @import "@heroui/theme/dist/index.css"; */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradientMove {
+  animation: gradientMove 12s ease infinite;
+}
+
+.bubble {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  animation: bubbleUp 8s infinite ease-in-out;
+}
+
+@keyframes bubbleUp {
+  0%   { transform: translateY(0) scale(1); opacity: 0.4; }
+  50%  { transform: translateY(-40px) scale(1.1); opacity: 0.8; }
+  100% { transform: translateY(0) scale(1); opacity: 0.4; }
+}
+
+@keyframes aeroShine {
+  0% {
+    transform: translateX(-150%);
+  }
+  50% {
+    transform: translateX(150%);
+  }
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+@keyframes aeroPulse {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.07);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@keyframes aeroGlow {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+.animate-aeroShine {
+  animation: aeroShine 4s ease-in-out infinite;
+}
+
+.animate-aeroPulse {
+  animation: aeroPulse 6s ease-in-out infinite;
+}
+
+.animate-aeroGlow {
+  animation: aeroGlow 5s ease-in-out infinite;
+}
