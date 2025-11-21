@@ -48,9 +48,9 @@ export default function CardPrinter({ printer, status }) {
                 if (newStatus?.client?.client?.connection && newStatus?.client?.client2.connection) {
                     setKoneksi("connected");
                 } else setKoneksi("Disconnect");
-                if (newStatus?.client?.messages) {
+                if (newStatus?.client?.lastMsg) {
                     setMsg([])
-                    const dtMsg = newStatus?.client?.messages;
+                    const dtMsg = newStatus?.client?.lastMsg;
                     dtMsg.forEach((m) => {
                         setMsg((prevMsg) => [...prevMsg, m.field_value]);
 

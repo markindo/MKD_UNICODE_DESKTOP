@@ -66,6 +66,7 @@ app.whenReady().then(() => {
   ipcMain.handle("save-file", async (event, fileInfo) => {
     const printer = dataPrinter.find(printer => printer.id === fileInfo.idPrinter);
     printer?.client?.systemCounter ? printer.client.systemCounter = 0 : printer.system_counter = 0
+    printer?.client?.counter ? printer.client.counter = 0 : 0
     printer.system_counter = 0
     new Notification({
       title: "Reading Data",

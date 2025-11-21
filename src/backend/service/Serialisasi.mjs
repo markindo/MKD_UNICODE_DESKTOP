@@ -13,7 +13,7 @@ export class Serialisasi {
         this.flag = {
             dataSend: 0
         }
-        this.lastMsg = ""
+        this.lastMsg = []
         this.messages = []
         this.systemCounter = systemCounter
         this.productCounter = productCounter
@@ -45,19 +45,18 @@ export class Serialisasi {
         };
 
         if (this.client != null) {
-            this.client = null
+            this.client.stop();
         }
         if (this.client2 != null) {
-            this.client2 = null
+            this.client2.stop();
         }
-        console.log("Connecting to printer", options)
         this.client = new PrinterSocket(options, handlers);
         this.client.start();
         options.port = this.portAck
         this.client2 = new PrinterSocket(options, handlers2);
         this.client2.start();
         this.messages = await getMessagesByPrinterId(this.id, this.productSum)
-
+        this.lastMsg = this.messages
 
     }
     stop() {
@@ -65,7 +64,7 @@ export class Serialisasi {
         this.client2.stop()
         setTimeout(() => {
             this.client.stop()
-        }, 1000
+        }, 200
         )
 
     }
@@ -76,8 +75,7 @@ export class Serialisasi {
     async startPrint() {
         console.log("Starting")
         if (this.client != null && this.client.connection == true) {
-            this.client.send("Start;\r\n")
-
+            this.sendPrinter()
         }
     }
     async stopPrint() {
@@ -86,6 +84,38 @@ export class Serialisasi {
             this.client.send("Stop;\r\n")
 
         }
+    }
+    async sendPrinter() {
+        //send pertamakali
+        let msgSend = "SetVars;"
+        let counting = 1
+        this.messages.forEach(async (msg, i) => {
+            msgSend += `QR${counting};~1${msg.field_value};B1.${counting};${msg.field_value.toString().slice(0, 7)};B2.${counting};${msg.field_value.toString().slice(-7)};`
+        });
+        msgSend += `\r\n`
+        this.lastMsg = this.messages
+        this.client.send(msgSend)
+        this.messages.forEach(async (msg, i) => {
+            await updateMessageFlag(msg.id, 1)
+            0
+        });
+        const dataLog = {
+            "id_printer": this.id,
+            "message": JSON.stringify(this.messages),
+            "system_counter": this.systemCounter,
+            "product_counter": this.productCounter,
+            "marking_counter": this.markingCounter,
+            "counter": this.counter,
+            "status": this.status
+
+        }
+        await addLog(dataLog)
+        this.lastMsg = this.messages
+        this.messages = []
+        this.messages = await getMessagesByPrinterId(this.id, this.productSum)
+        this.systemCounter++
+
+        this.counter += 1 * this.productSum
     }
 
 
@@ -102,37 +132,7 @@ export class Serialisasi {
                 if (parse[1] == "MarkingCounterChanged") {
                     this.markingCounter = parse[2]
                     console.log("Counter", this.counter)
-                    let msgSend = "SetVars;"
-                    let msg = ""
-                    let counting = 1
-
-                    this.messages.forEach(async (msg, i) => {
-                        msgSend += `QR${counting};~1${msg.field_value};B1.${counting};${msg.field_value.toString().slice(0, 7)};B2.${counting};${msg.field_value.toString().slice(-7)};`
-                        counting++
-                    });
-                    msgSend += `\r\n`
-                    //console.log("msgSend", msgSend)
-                    this.client.send(msgSend)
-                    this.messages.forEach(async (msg, i) => {
-                        await updateMessageFlag(msg.id, 1)
-                        0
-                    });
-                    const dataLog = {
-                        "id_printer": this.id,
-                        "message": JSON.stringify(this.messages),
-                        "system_counter": this.systemCounter,
-                        "product_counter": this.productCounter,
-                        "marking_counter": this.markingCounter,
-                        "counter": this.counter,
-                        "status": this.status
-
-                    }
-                    await addLog(dataLog)
-                    this.messages = []
-                    this.messages = await getMessagesByPrinterId(this.id, this.productSum)
-                    this.systemCounter++
-
-                    this.counter += 1 * this.productSum
+                    this.sendPrinter()
                     // SetVars;Var1;abc;Var2;123;Ser1;001;<CR><LF></LF>
                 }
                 else if (parse[1] == "ProductCounterChanged") {
@@ -148,18 +148,5 @@ export class Serialisasi {
         } catch (error) {
             console.error("Error parsing ACK:", error);
         }
-        // console.log("Data received: ", data);
-
-        // this.lastMsg = this.messages[this.counter].field_value
-        // console.log("To Printer", this.messages[this.counter].field_value)
-        // this.client.send(this.messages[this.counter].field_value)
-        // updateMessageFlag(this.messages[this.counter].id, 1)
-        // if (this.counter >= this.messages.length - 1) {
-        //     console.log("All messages sent");
-        //     this.messages = await getMessagesByPrinterId(this.id)
-        //     this.counter = 0
-        //     return;
-        // }
-
     }
 }
